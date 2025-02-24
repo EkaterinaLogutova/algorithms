@@ -1,55 +1,78 @@
 #include <iostream>
 #include <vector>
-#include <string>
 
 using namespace std;
 
-//возможно ли достичь n не более, чем за k?
-
-bool can_reach(int n, int k, const string& a, int max_jump) {
-    vector<int> dp(n + 1, k + 1); // dp[i] - минимальное кол-во прыжков, чтобы достичь i
-    dp[0] = 0; //начальное положение
-    //dp[i]=k+1 для остальных точек, 
-    //чтобы обозначить, что они недостижимы изначально
-
-    for (int i = 0; i < n; ++i) {
-        if (dp[i] > k) continue; // Невозможно достичь i за k прыжков
-
-        for (int j = 1; j <= max_jump; ++j) {
-            if (i + j <= n) {
-                if (i + j == n || (i + j < n && a[i + j - 1] == '1')) { //либо конечная, либо можно приземлиться
-                    dp[i + j] = min(dp[i + j], dp[i] + 1);
-                }
+bool check(const vector<int>& ind, int k, int mid) {
+    int j = 0;
+    int ans = 1;
+    int delta{};
+    int i =1;
+    while(i < ind.size()) {
+        delta = ind[i] - ind[j];
+        if (delta > mid) {
+            if (i - j == 1) {
+                return false;
+            } else {
+                ans++;
+                j = i - 1;
             }
+        } else if (delta == mid) {
+            ans++;
+            j = i;
+            i++;
+        } else {
+            if (i == ind.size()) {
+                ans++;
+            }
+            i++;
         }
     }
-
-    return dp[n] <= k;
+    return ans <= k;
 }
 
-
-int main(){
-
-    int n, k;
-    cin >> n >> k;
-    string a;
-    cin >> a;
-
-    int left = 1;
+int bin_search(int n, int k, const vector<int>& ma, const vector<int>& ind) {
+    int left = 0;
     int right = n;
-    int ans = n;
-
-    while (left <= right) { //бин поиск для определения минимально возможной max_jump
-        int mid = left + (right - left) / 2;
-        if (can_reach(n, k, a, mid)) {
-            ans = mid;
-            right = mid - 1;
+    int mid{};
+    while (right - left > 1) {
+        mid = (right + left) / 2;
+        if (check(ind, k, mid)) {
+            right = mid;
         } else {
-            left = mid + 1;
+            left = mid;
         }
     }
+    if (check(ind, k, left)) {
+        return left;
+    }
+    return right;
+}
 
-    cout << ans << endl;
+int main() {
+    int n, k;
+    cin >> n >> k;
+    
+    vector<int> ma(n);
+    int i=0;
+    while(i<n-1)
+    {
+        cin>>ma[i];
+        i++;
+    }
+
+    vector<int> ind;
+    ind.push_back(0);
+    
+    for (int i = 0; i < n - 1; i++) {
+        if (ma[i]) {
+            ind.push_back(i + 1);
+        }
+    }
+    
+    ind.push_back(n);
+    
+    cout << bin_search(n, k, ma, ind) << endl;
 
     return 0;
 }
